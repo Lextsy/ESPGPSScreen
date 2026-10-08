@@ -6,6 +6,28 @@ UTC time on a 1.8" 128x160 ST7735S TFT.
 
 ## Hardware
 
+The classic AI-Thinker ESP32-CAM exposes **16 pins**: 14 on the long edge, 2
+(`5V`, `GND`) on the short edge. This build uses 11 of them.
+
+| Long-edge pin | Used for | Long-edge pin | Used for |
+|---|---|---|---|
+| `3V3` | TFT VDD, GPS VCC | `IO14` | spare |
+| `GND` | TFT GND, GPS GND | `IO35` | spare |
+| `RST` | board reset button | `IO32` | spare |
+| `IO4` | TFT CS | `IO33` | spare (on-board LED) |
+| `IO2` | TFT SDA (MOSI) | `IO34` | GPS TX -> GPS_RX |
+| `IO15` | TFT RST | `IO26` | TFT BLK |
+| `IO13` | TFT DC | `5V` (short edge) | 5 V supply in |
+| `IO12` | TFT SCL | `GND` (short edge) | 5 V return |
+
+- `U0T` (GPIO 1) and `U0R` (GPIO 3) are **not** on the 14-pin header. They are the
+  pair of pads by the microSD slot; the ESP32-CAM-MB demo base board wires them to
+  its USB-TTL. Read the silkscreen to confirm on a clone board.
+- Do not use the GND pin next to `IO1` as the ground rail: on some revisions it is
+  `GND/R`, the reset input. Use the `GND` pin next to `3V3`.
+- `P_OUT` (labelled `VCC` on some boards) is a 3.3 V/5 V **output**; never feed
+  power into it.
+
 | TFT pin | ESP32-CAM GPIO | Notes |
 |---|---|---|
 | VDD  | 3V3 | 3.3 V, not 5 V |
@@ -42,9 +64,10 @@ pio run -t upload        # build + flash over the board's USB-TTL
 pio device monitor       # 115200, one status line per second
 ```
 
-The ESP32-CAM needs to be put in download mode: pull **GPIO 0 low** (IO0 → GND),
-then press the board's reset button. Flashing starts after `Connecting .....`
-appears. Return IO0 to floating and reset to run.
+GPIO 0 is not a header pin: it is the board's **IO0 button** (and the camera XCLK
+line). Download mode = hold IO0, press reset, release. A USB-TTL adapter that
+asserts DTR/RTS (FT232R, CP2102 with the auto-program wiring) enters download mode
+by itself, so no button handling is needed; this board flashes over COM5 that way.
 
 ## Display
 
