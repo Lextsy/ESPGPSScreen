@@ -4,6 +4,15 @@ Firmware for an ESP32-CAM that acquires a GPS fix from a GY-GPSV3-NEO receiver
 and shows latitude/longitude, fix quality, satellites, HDOP, altitude, speed and
 UTC time on a 1.8" 128x160 ST7735S TFT.
 
+## Notes
+
+This repo is 100% AI generated, with the exception of this ## Notes section.
+Used Qwen3.8 Flash Next via Strata (local llm).
+Took around 2 hours from initial prompt to final GPS lock.
+AI initially made a mistake that ESP32-CAM had a pin 36.
+(It does, but it's on the SoC)
+It still thinks there is a long row and short row of pins. Reality is 8+8.
+
 ## Hardware
 
 The board is the AI-Thinker ESP32-CAM. It exposes **16 header pins**: 14 on the
