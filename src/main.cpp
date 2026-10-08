@@ -9,20 +9,34 @@
 #include <TinyGPSPlus.h>
 
 // ---------------------------------------------------------------- pin map
-// ESP32-CAM: the camera and the microSD slot share GPIO 2/4/12/13/15, so the
-// display uses those pins and the microSD slot must stay empty.
+// AI-Thinker ESP32-CAM header GPIOs: 0, 1, 2, 3, 4, 12, 13, 14, 15, 16.
+//   GPIO 0  = BOOT strap and the on-board IO0 button (also camera XCLK)
+//   GPIO 1/3 = U0T/U0R, the USB-TTL flashing and console pair
+//   GPIO 16 = PSRAM CS#; the module has 4 MB PSRAM and the board enables it
+// The six pins left are GPIO 2/4/12/13/14/15, the microSD SPI lines, free while
+// the slot stays empty. GPIO 4 also drives the white flash LED: it lights when
+// GPIO 4 is HIGH, and SPI chip select idles HIGH, so CS must not sit on GPIO 4.
+// CS lives on GPIO 15 instead (its MTDO strap wants HIGH at boot, which is
+// exactly what an idle chip select is) and the display's RST goes to 3V3.
+// GPIO 24/26/27/32/33/34/35/36/39 are NOT on the header: they are the camera
+// data/I2C/power-down lines and the in-package flash/PSRAM inside the module.
 #define TFT_MOSI        2   // TFT SDA
 #define TFT_SCLK       12   // TFT SCL
-#define TFT_CS          4   // TFT CS
+#define TFT_CS         15   // TFT CS  (not GPIO 4: HIGH there lights the flash LED)
 #define TFT_DC         13   // TFT DC
-#define TFT_RST        15   // TFT RST  (-1 = hardwired to 3V3)
-#define TFT_BLK        26   // TFT BLK  (-1 = hardwired to GND, always on)
-#define TFT_BLK_INVERT  1   // 1 = backlight lights when BLK is LOW
+#define TFT_RST        -1   // TFT RST hardwired to 3V3 (frees GPIO 15 for CS)
+#define TFT_BLK        -1   // TFT BLK wired to GND (active LOW = always on).
+                            // No spare header GPIO: the GPS owns GPIO 14.
+                            // Backlight PWM needs IO3 (see README).
+#define TFT_BLK_INVERT  1   // 1 = backlight lights when BLK is LOW; only read
+                            // when TFT_BLK >= 0
 #define TFT_ROTATION    1   // 1 = 160x128 landscape
-#define GPS_RX         34   // input-only pin; GPS TX -> this pin
+#define GPS_RX         14   // GPS TX -> this pin; UART2 receive side
 #define GPS_TX         -1   // the NEO receiver never needs to be addressed
 #define GPS_BAUD     9600   // GY-GPSV3-NEO factory default
 #define DEBUG_RAW       0   // 1 = echo raw NMEA on the USB serial port
+#define LED_FLASH       4   // white flash LED on the board: HIGH lights it.
+                            // Driven LOW in setup() so the board stays dark.
 
 // ---------------------------------------------------------------- objects
 static lgfx::Bus_SPI bus;
@@ -195,6 +209,8 @@ static void render(uint32_t now) {
 
 // ---------------------------------------------------------------- main
 void setup(void) {
+  pinMode(LED_FLASH, OUTPUT);      // GPIO 4 is free of CS now; keep the LED off
+  digitalWrite(LED_FLASH, LOW);
   Serial.begin(115200);
   initDisplay();
 
