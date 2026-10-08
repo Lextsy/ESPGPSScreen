@@ -10,4 +10,12 @@
 *.sig
 
 pkg/
-src/
+
+# PlatformIO
+.pio/
+build/
+cmake_build/
+.vscode/
+.idea/
+__pycache__/
+*.pyc
